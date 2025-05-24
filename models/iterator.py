@@ -56,6 +56,12 @@ class AsientosCollection:
             self._asientos_ocupados.remove(asiento_id)
         self._asientos_vendidos.append(asiento_id)
     
+    def desmarcar_asientos_vendidos(self, asientos: List[str]):
+        """Desmarca asientos vendidos (útil para reembolsos)"""
+        for asiento in asientos:
+            if asiento in self._asientos_vendidos:
+                self._asientos_vendidos.remove(asiento)
+    
     def esta_vendido(self, asiento_id: str) -> bool:
         """Verifica si un asiento ya fue vendido"""
         return asiento_id in self._asientos_vendidos

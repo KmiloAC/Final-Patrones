@@ -160,15 +160,40 @@ class PedidoController:
             logger.warning("No hay pedido actual para cancelar.")
 
 
-    def solicitar_reembolso(self):
-        """Solicita reembolso para el pedido actual si es posible."""
-        if self.pedido_actual:
-            # Llama al método solicitar_reembolso que añadimos a la clase ChainPedido
-            self.pedido_actual.solicitar_reembolso()
-            logger.info(f"Solicitud de reembolso para pedido {self.pedido_actual.id} procesada.")
-        else:
-            logger.warning("No hay pedido actual para solicitar reembolso.")
+    def cargar_pedido_desde_historial(self, pedido_id):
+        """Carga un pedido desde el historial para procesarlo"""
+        if hasattr(self, 'historial_pedidos'):
+            for pedido in self.historial_pedidos:
+                if pedido.id == pedido_id:
+                    self.pedido_actual = pedido
+                    return True
+        return False
 
+    def solicitar_reembolso(self, pedido_id=None):
+        """Solicita reembolso para un pedido específico o el actual"""
+        if pedido_id and self.pedido_actual is None:
+            # Si se proporciona un ID y no hay pedido actual, intentar cargar desde historial
+            if not self.cargar_pedido_desde_historial(pedido_id):
+                logger.warning(f"No se encontró el pedido {pedido_id} en el historial")
+                return False
+
+        if not self.pedido_actual:
+            logger.warning("No hay pedido actual para reembolsar")
+            return False
+
+        if self.pedido_actual.estado != EstadoPedido.COMPLETADO:
+            logger.warning(f"El pedido {self.pedido_actual.id} no está en estado COMPLETADO")
+            return False
+
+        # Procesar el reembolso
+        resultado = self.pedido_actual.solicitar_reembolso()
+        
+        if resultado:
+            logger.info(f"Reembolso procesado exitosamente para pedido {self.pedido_actual.id}")
+            return True
+        else:
+            logger.error(f"Error en el reembolso del pedido {self.pedido_actual.id}: {self.pedido_actual.mensaje_error}")
+            return False
 
     # --- Métodos que ya no son llamados directamente para el flujo principal ---
     # La lógica de estos métodos ahora está en los Manejadores de la cadena.

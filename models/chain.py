@@ -63,6 +63,7 @@ class Pedido:
 
         self.estado = EstadoPedido.PENDIENTE
         self.mensaje_error = None
+        self._asientos_reembolsados = False  # Nuevo flag para controlar reembolso
 
     def set_estado(self, estado: EstadoPedido):
         logger.info(f"Pedido {self.id}: Cambiando estado a {estado.value}")
@@ -82,54 +83,34 @@ class Pedido:
         else:
              logger.warning(f"Pedido {self.id}: No se puede cancelar el pedido en estado {self.estado.value}")
 
-    def solicitar_reembolso(self):
+    def solicitar_reembolso(self) -> bool:
         """Procesa la solicitud de reembolso del pedido"""
-        if self.estado == EstadoPedido.COMPLETADO:
-            logger.info(f"Pedido {self.id}: Procesando solicitud de reembolso")
+        if self.estado != EstadoPedido.COMPLETADO:
+            self.mensaje_error = "Solo se pueden reembolsar pedidos completados"
+            return False
+
+        try:
+            # Procesamos el reembolso independientemente del método de pago
+            logger.info(f"Procesando reembolso para pedido {self.id} con método {self.metodo_pago}")
             
-            # Verificar si el pedido es elegible para reembolso (ejemplo: menos de 24h)
-            if self._es_elegible_para_reembolso():
-                self.set_estado(EstadoPedido.REEMBOLSO_SOLICITADO)
-                
-                # Simular proceso de reembolso con el método de pago original
-                if self._procesar_reembolso():
-                    self.set_estado(EstadoPedido.REEMBOLSO_PROCESADO)
-                    logger.info(f"Pedido {self.id}: Reembolso procesado exitosamente")
-                    return True
-                else:
-                    self.set_estado(EstadoPedido.REEMBOLSO_RECHAZADO)
-                    self.set_error("No se pudo procesar el reembolso con el método de pago original")
-                    return False
-            else:
-                self.set_estado(EstadoPedido.REEMBOLSO_RECHAZADO)
-                self.set_error("Pedido no elegible para reembolso")
-                return False
-        else:
-            logger.warning(f"Pedido {self.id}: No se puede solicitar reembolso en estado {self.estado.value}")
-            self.set_error("Solo se pueden reembolsar pedidos completados")
+            # Aquí podrías agregar lógica específica para cada método de pago
+            # Por ahora, simplemente aprobamos todos los reembolsos
+            
+            self.estado = EstadoPedido.REEMBOLSO_PROCESADO
+            self._asientos_reembolsados = True
+            return True
+
+        except Exception as e:
+            self.mensaje_error = f"Error en el reembolso: {str(e)}"
+            self.estado = EstadoPedido.REEMBOLSO_RECHAZADO
             return False
 
-    def _es_elegible_para_reembolso(self) -> bool:
-        """Verifica si el pedido es elegible para reembolso"""
-        # Aquí puedes agregar tu lógica de negocio
-        # Por ejemplo: verificar tiempo transcurrido, estado de los asientos, etc.
-        return True  # Para demo, siempre retornamos True
+    @property
+    def asientos_reembolsados(self) -> bool:
+        return self._asientos_reembolsados
 
-    def _procesar_reembolso(self) -> bool:
-        """Procesa el reembolso con el método de pago original"""
-        # Aquí iría la lógica real de reembolso con la pasarela de pago
-        # Para la demo, simulamos éxito excepto para ciertos métodos de pago
-        if self.metodo_pago == "efectivo":
-            logger.warning(f"Pedido {self.id}: Reembolso en efectivo requiere proceso manual")
-            return False
-        return True
-
-    def __str__(self):
-        return f"Pedido(ID: {self.id}, Estado: {self.estado.value}, Total: {self.total_final:.2f}, Error: {self.mensaje_error})"
-
-
-# --- Interfaz del Manejador ---
-# Define la interfaz que todos los manejadores deben seguir.
+    # --- Interfaz del Manejador ---
+    # Define la interfaz que todos los manejadores deben seguir.
 
 class ManejadorPedido(abc.ABC):
     @abc.abstractmethod

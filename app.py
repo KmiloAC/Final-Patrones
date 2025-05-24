@@ -74,7 +74,8 @@ def index():
         historial_pedidos=historial_pedidos,  # Solo para mostrar/ocultar botón
         active_section=active_section,
         pedido_info=controller.pedido_actual if controller.pedido_actual else None,
-        error_message=request.args.get('error', None)
+        error_message=request.args.get('error', None),
+        success_message=request.args.get('message', None)  # Añadido para mensajes de éxito
     )
 
 @app.route('/select/<string:asiento_id>')
@@ -155,14 +156,31 @@ def cancel_order():
 
 @app.route('/refund_order', methods=['POST'])
 def refund_order():
-    """Ruta para solicitar reembolso para el pedido actual."""
-    if controller.pedido_actual:
-        resultado = controller.pedido_actual.solicitar_reembolso()
-        if resultado:
-            logger.info("Reembolso procesado exitosamente")
+    """Ruta para solicitar reembolso para el pedido actual o desde historial"""
+    try:
+        pedido_id = request.form.get('pedido_id')  # Obtener ID del pedido si viene del historial
+        
+        if controller.solicitar_reembolso(pedido_id):
+            # Si el reembolso fue exitoso, liberar los asientos
+            if controller.pedido_actual.items_boletas:  # Verificar si hay asientos para liberar
+                asientos_a_liberar = [item.asiento_id for item in controller.pedido_actual.items_boletas]
+                asientos_collection.desmarcar_asientos_vendidos(asientos_a_liberar)
+            
+            if pedido_id:
+                return redirect(url_for('ver_historial', message="Reembolso procesado exitosamente"))
+            return redirect(url_for('index', message="Reembolso procesado exitosamente"))
         else:
-            logger.error(f"Error en el reembolso: {controller.pedido_actual.mensaje_error}")
-    return redirect(url_for('index'))
+            error_msg = (controller.pedido_actual.mensaje_error 
+                        if controller.pedido_actual 
+                        else "No se pudo procesar el reembolso")
+            if pedido_id:
+                return redirect(url_for('ver_historial', error=error_msg))
+            return redirect(url_for('index', error=error_msg))
+    except Exception as e:
+        logger.error(f"Error al procesar reembolso: {str(e)}")
+        if pedido_id:
+            return redirect(url_for('ver_historial', error="Error inesperado al procesar el reembolso"))
+        return redirect(url_for('index', error="Error inesperado al procesar el reembolso"))
 
 @app.route('/next_section/<string:section>')
 def next_section(section):
