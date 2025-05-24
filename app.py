@@ -47,7 +47,11 @@ def finish_process():
             controller.historial_pedidos = []
         controller.historial_pedidos.append(controller.pedido_actual)
     
-    controller.reiniciar()
+    try:
+        controller.reiniciar()
+    except Exception as e:
+        logger.error(f"Error al reiniciar el controlador: {e}")
+    
     return redirect(url_for('index'))
 
 @app.route('/')

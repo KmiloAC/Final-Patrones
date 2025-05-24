@@ -84,7 +84,7 @@ class PedidoController:
         else:
             logger.warning("No hay más acciones para rehacer.")
 
-    # --- Método para iniciar el Proceso con Chain of Responsibility ---
+    # --- Método para iniciar el Proceso with Chain of Responsibility ---
     def iniciar_proceso_pedido(self, metodo_pago="efectivo", items_confiteria: List[ItemConfiteria] = None, cupon: str = None):
         """
         Recopila la selección actual, crea un objeto Pedido (de chain.py)
@@ -199,3 +199,10 @@ class PedidoController:
     def obtener_estado_asientos(self):
         """Devuelve el estado actual de la selección de asientos desde el Memento."""
         return self.seleccionador.obtener_estado_actual()
+
+    def reiniciar(self):
+        """Reinicia el estado del controlador para un nuevo pedido"""
+        self.pedido_actual = None
+        self.seleccionador = SeleccionAsientos()
+        self.historial = GestorHistorialSeleccion()
+        logger.info("Controlador reiniciado para nuevo pedido")
