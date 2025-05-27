@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Pedidos (Demo)</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome para íconos -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --dark-bg: #1A1A1A;           /* Fondo principal oscuro */
+            --darker-bg: #121212;         /* Fondo más oscuro para cards */
+            --primary-color: #4CAF50;     /* Verde principal */
+            --primary-hover: #45A049;     /* Verde hover */
+            --accent-color: #81C784;      /* Verde acento */
+            --text-primary: #E0E0E0;      /* Texto principal */
+            --text-secondary: #9E9E9E;    /* Texto secundario */
+            --border-color: #333333;      /* Bordes */
+            --success-color: #66BB6A;     /* Verde éxito */
+            --warning-color: #FFA726;     /* Naranja advertencia */
+            --danger-color: #EF5350;      /* Rojo error */
+            --info-color: #42A5F5;        /* Azul info */
+        }
+
+        body { 
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        .container {
+            max-width: 1140px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            font-size: 2.5rem;
+        }
+
+        .card {
+            display: block; /* Cambiamos de none a block */
+            opacity: 1;     /* Cambiamos la opacidad por defecto */
+            pointer-events: all; /* Permitimos interacción por defecto */
+            background: var(--darker-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+            transition: transform 0.2s ease;
+        }
+
+        .card#historial-section {
+            display: none; /* Solo el historial se oculta por defecto */
+        }
+
+        .card.active {
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.2);
+        }
+
+        .card.completed {
+            display: none;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            border-bottom: 1px solid var(--border-color);
+            color: white;
+            border-radius: 20px 20px 0 0 !important;
+            padding: 1.5rem;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .seat-map { 
+            display: grid;
+            grid-template-columns: repeat(10, 45px);
+            gap: 8px;
+            margin: 20px auto;
+            justify-content: center;
+            padding: 20px;
+            background: #F8FAFC;
+            border-radius: 15px;
+        }
+
+        .seat-button {
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background-color: var(--darker-bg);
+            color: var(--text-secondary);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .seat-button:hover:not(:disabled) {
+            background-color: var(--primary-color);
+            color: var(--text-primary);
+            transform: scale(1.1);
+        }
+
+        .seat-button.selected {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+        }
+
+        .seat-button.sold {
+            background-color: var(--danger-color);
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+            color: var(--text-primary);
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: #8B4543;                /* Rojo oscuro suave */
+            border: none;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: #8B7355;                /* Marrón suave */
+            border: none;
+            box-shadow: 0 5px 15px rgba(241, 196, 15, 0.3);
+        }
+
+        .form-control, .form-select {
+            background-color: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 0.8rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: var(--darker-bg);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+            color: var(--text-primary);
+        }
+
+        .status-badge {
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+            background-color: var(--darker-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .status-completed {
+            background-color: rgba(102, 187, 106, 0.2);
+            color: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .status-failed {
+            background-color: rgba(239, 83, 80, 0.2);
+            color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+
+        .status-cancelled {
+            background-color: rgba(255, 167, 38, 0.2);
+            color: var(--warning-color);
+            border-color: var(--warning-color);
+        }
+
+        .price-tag {
+            font-size: 1.5rem;
+            color: var(--success-color);
+            font-weight: 700;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid var(--success-color);
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .alert {
+            border-radius: 15px;
+            padding: 1rem 1.5rem;
+            background-color: var(--darker-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .alert-danger {
+            background-color: rgba(239, 83, 80, 0.2);
+            border-color: var(--danger-color);
+            color: var(--danger-color);
+        }
+
+        .alert-info {
+            background-color: rgba(66, 165, 245, 0.2);
+            border-color: var(--info-color);
+            color: var(--info-color);
+        }
+
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding: 0 1rem;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background-color: var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .step.active .step-number {
+            background-color: var(--primary-color);
+        }
+
+        .step.completed .step-number {
+            background-color: var(--success-color);
+        }
+
+        .step-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .step.active .step-label {
+            color: var(--primary-color);
+        }
+
+        .text-muted {
+            color: var(--text-secondary) !important;
+        }
+
+        select option {
+            background-color: var(--darker-bg);
+            color: var(--text-primary);
+        }
+
+        .card-footer {
+            background: var(--darker-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 1rem;
+        }
+
+        .historial-item {
+            background: var(--darker-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .historial-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
+        }
+
+        .nav-buttons {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1000;
+        }
+
+        .btn-historial {
+            background: var(--accent-color);
+            color: var(--darker-bg);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-historial:hover {
+            background: var(--success-color);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <!-- Botón de historial en la esquina superior derecha -->
+    {% if historial_pedidos %}
+    <div class="nav-buttons">
+        <button class="btn btn-historial" onclick="window.location.href='{{ url_for('ver_historial') }}'">
+            <i class="fas fa-history"></i> Ver Compras Anteriores
+        </button>
+    </div>
+    {% endif %}
+
+    <div class="container">
+        <h1 class="text-center mb-4">Sistema de Compra de Entradas</h1>
+        
+        <!-- Indicador de pasos del proceso -->
+        <div class="step-indicator">
+            <div class="step active" id="step-1">
+                <div class="step-number">1</div>
+                <div class="step-label">Selección de Asientos</div>
+            </div>
+            <div class="step" id="step-2">
+                <div class="step-number">2</div>
+                <div class="step-label">Proceso de Compra</div>
+            </div>
+            <div class="step" id="step-3">
+                <div class="step-number">3</div>
+                <div class="step-label">Confirmación</div>
+            </div>
+        </div>
+
+        <!-- Solo mostramos las secciones principales, quitamos el historial -->
+        <div class="card active" id="seleccion-section">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Selección de Asientos</h2>
+                <div>
+                    <button class="btn btn-secondary btn-undo-redo" onclick="window.location.href='/undo'">
+                        <i class="fas fa-undo"></i> Deshacer
+                    </button>
+                    <button class="btn btn-secondary btn-undo-redo" onclick="window.location.href='/redo'">
+                        <i class="fas fa-redo"></i> Rehacer
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Asientos Seleccionados:</h5>
+                <p class="card-text">
+                    {% if selected_seats %}
+                        <span class="badge bg-success">{{ selected_seats | join(', ') }}</span>
+                    {% else %}
+                        <span class="text-muted">Ningún asiento seleccionado</span>
+                    {% endif %}
+                </p>
+                
+                <div class="seat-map">
+                    {% for seat_id in all_seats %}
+                        {% set is_selected = seat_id in selected_seats %}
+                        {% set is_sold = seat_id in sold_seats %}
+                        <button class="seat-button {% if is_selected %}selected{% elif is_sold %}sold{% endif %}"
+                                onclick="window.location.href='/{% if is_selected %}deselect{% else %}select{% endif %}/{{ seat_id }}'"
+                                {% if is_sold %}disabled{% endif %}
+                                title="{% if is_sold %}Asiento no disponible{% endif %}">
+                            {{ seat_id }}
+                        </button>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-secondary" onclick="window.location.href='/'">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </button>
+                    <button class="btn btn-primary" onclick="window.location.href='/next_section/pago'">
+                        Continuar al Pago <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="pago-section">
+            <div class="card-header">
+                <h2 class="mb-0">Procesar Pedido</h2>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('process_order') }}" method="post" id="payment-form">
+                    <div class="mb-3">
+                        <label class="form-label" for="metodo_pago">Método de Pago</label>
+                        <select class="form-select" id="metodo_pago" name="metodo_pago">
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta_credito">Tarjeta Crédito</option>
+                            <option value="tarjeta_debito">Tarjeta Débito</option>
+                            <option value="Tarjeta rechazada">Tarjeta rechazada (Simulación Error)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="cupon">Cupón de Descuento</label>
+                        <input type="text" class="form-control" id="cupon" name="cupon" placeholder="Ej: CINE20">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="add_confiteria" name="add_confiteria" value="yes">
+                        <label class="form-check-label" for="add_confiteria">Añadir Confitería de Ejemplo (Palomitas x2)</label>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" onclick="window.location.href='/next_section/seleccion'">
+                                <i class="fas fa-arrow-left"></i> Volver a Selección
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-shopping-cart"></i> Procesar Pago
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sección de Estado del Pedido -->
+        <div class="card" id="confirmacion-section">
+            <div class="card-header">
+                <h2 class="mb-0">Confirmación de Pedido</h2>
+            </div>
+            <div class="card-body">
+                {% if pedido_info %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>ID Pedido:</strong> {{ pedido_info.id }}</p>
+                            <p>
+                                <strong>Estado:</strong>
+                                <span class="status-badge 
+                                    {% if pedido_info.estado == 'COMPLETADO' %}status-completed
+                                    {% elif pedido_info.estado == 'FALLIDO' %}status-failed
+                                    {% elif pedido_info.estado == 'CANCELADO' %}status-cancelled
+                                    {% elif pedido_info.estado == 'REEMBOLSO_PROCESADO' %}status-refunded
+                                    {% elif pedido_info.estado == 'REEMBOLSO_RECHAZADO' %}status-refund-rejected
+                                    {% endif %}">
+                                    {{ pedido_info.estado }}
+                                </span>
+                            </p>
+                            <p><strong>Método Pago:</strong> {{ pedido_info.metodo_pago }}</p>
+                            {% if pedido_info.cupon %}
+                                <p><strong>Cupón:</strong> {{ pedido_info.cupon }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Subtotal:</strong> ${{ pedido_info.subtotal }}</p>
+                            <p><strong>Descuento:</strong> ${{ pedido_info.descuento_aplicado }}</p>
+                            <p><strong>Impuestos:</strong> ${{ pedido_info.impuestos }}</p>
+                            <p class="price-tag">Total Final: ${{ pedido_info.total_final }}</p>
+                        </div>
+                    </div>
+
+                    {% if pedido_info.mensaje_error %}
+                        <div class="alert alert-danger mt-3">
+                            <i class="fas fa-exclamation-triangle"></i> {{ pedido_info.mensaje_error }}
+                        </div>
+                    {% endif %}
+
+                    <div class="mt-3">
+                        {% if pedido_info.estado in ['PENDIENTE', 'VALIDANDO', 'CALCULANDO_PRECIOS', 'APLICANDO_DESCUENTOS', 'PROCESANDO_PAGO'] %}
+                            <form action="{{ url_for('cancel_order') }}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-times"></i> Cancelar Pedido
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        {% if pedido_info.estado == 'COMPLETADO' %}
+                            <form action="{{ url_for('refund_order') }}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-undo-alt"></i> Solicitar Reembolso
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+
+                    {% if pedido_info.estado == 'REEMBOLSO_SOLICITADO' %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-spinner fa-spin"></i> Procesando solicitud de reembolso...
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted">No se ha procesado ningún pedido aún.</p>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-secondary" onclick="window.location.href='/next_section/pago'">
+                        <i class="fas fa-arrow-left"></i> Volver al Pago
+                    </button>
+                    <button class="btn btn-success" onclick="window.location.href='/finish_process'">
+                        <i class="fas fa-check"></i> Terminar Proceso
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.card');
+            const steps = document.querySelectorAll('.step');
+            
+            function activateSection(sectionName) {
+                // Ocultar todas las secciones
+                cards.forEach(card => {
+                    if (card.id === sectionName + '-section') {
+                        card.classList.add('active');
+                        card.style.display = 'block';
+                    } else {
+                        card.classList.remove('active');
+                        card.style.display = 'none';
+                    }
+                });
+                
+                // Actualizar pasos
+                steps.forEach((step, index) => {
+                    step.classList.remove('active', 'completed');
+                    if (sectionName === 'seleccion' && index === 0) {
+                        step.classList.add('active');
+                    } else if (sectionName === 'pago' && index === 1) {
+                        steps[0].classList.add('completed');
+                        step.classList.add('active');
+                    } else if (sectionName === 'confirmacion' && index === 2) {
+                        steps[0].classList.add('completed');
+                        steps[1].classList.add('completed');
+                        step.classList.add('active');
+                    }
+                });
+            }
+
+            // Activar sección inicial o la especificada
+            const activeSection = '{{ active_section }}' || 'seleccion';
+            activateSection(activeSection);
+        });
+    </script>
+</body>
+</html>

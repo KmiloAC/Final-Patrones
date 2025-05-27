@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Compras</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --dark-bg: #1A1A1A;
+            --darker-bg: #121212;
+            --primary-color: #4CAF50;
+            --primary-hover: #45A049;
+            --accent-color: #81C784;
+            --text-primary: #E0E0E0;
+            --text-secondary: #9E9E9E;
+            --border-color: #333333;
+            --success-color: #66BB6A;
+            --warning-color: #FFA726;
+            --danger-color: #EF5350;
+            --info-color: #42A5F5;
+        }
+
+        body { 
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        .historial-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            font-size: 2.5rem;
+        }
+
+        .historial-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            padding: 2rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .historial-header h1 {
+            color: white;
+            margin: 0;
+        }
+
+        .historial-item {
+            background: var(--darker-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .historial-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .status-badge {
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+            background-color: var(--darker-bg);
+            border: 1px solid var(--border-color);
+            margin: 0.5rem 0;
+        }
+
+        .status-completed {
+            background-color: rgba(102, 187, 106, 0.2);
+            color: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .status-failed {
+            background-color: rgba(239, 83, 80, 0.2);
+            color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+
+        .status-refunded {
+            background-color: rgba(255, 167, 38, 0.2);
+            color: var(--warning-color);
+            border-color: var(--warning-color);
+        }
+
+        .price-tag {
+            font-size: 1.5rem;
+            color: var(--success-color);
+            font-weight: 700;
+            padding: 1rem;
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid var(--success-color);
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+            border: none;
+            box-shadow: 0 5px 15px rgba(241, 196, 15, 0.3);
+        }
+
+        .btn-warning:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+        }
+
+        .alert {
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            background-color: var(--darker-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .alert-info {
+            background-color: rgba(66, 165, 245, 0.1);
+            border-color: var(--info-color);
+            color: var(--info-color);
+        }
+
+        .asientos-tag {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            margin: 0.5rem 0;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="historial-container">
+        <div class="historial-header">
+            <h1><i class="fas fa-history"></i> Historial de Compras</h1>
+            <button class="btn btn-primary" onclick="window.location.href='/'">
+                <i class="fas fa-plus"></i> Nueva Compra
+            </button>
+        </div>
+
+        <!-- Add this right after the header -->
+        {% if error %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> {{ error }}
+            </div>
+        {% endif %}
+        {% if message %}
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> {{ message }}
+            </div>
+        {% endif %}
+
+        {% if historial_pedidos %}
+            {% for pedido in historial_pedidos %}
+                <div class="historial-item">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4 class="text-primary mb-3">Pedido #{{ pedido.id }}</h4>
+                            <p>
+                                <strong>Estado:</strong>
+                                <span class="status-badge 
+                                    {% if pedido.estado == 'COMPLETADO' %}status-completed
+                                    {% elif pedido.estado == 'FALLIDO' %}status-failed
+                                    {% elif pedido.estado == 'REEMBOLSO_PROCESADO' %}status-refunded{% endif %}">
+                                    {{ pedido.estado.value }}
+                                </span>
+                            </p>
+                            <p><strong>Método de Pago:</strong> {{ pedido.metodo_pago }}</p>
+                            <div class="asientos-tag">
+                                <i class="fas fa-couch"></i> 
+                                <strong>Asientos:</strong> {{ pedido.items_boletas | join(', ') }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="price-tag">
+                                <i class="fas fa-tag"></i> Total: ${{ pedido.total_final }}
+                            </p>
+                            {% if pedido.estado == EstadoPedido.COMPLETADO %}
+                                <form action="{{ url_for('refund_order') }}" method="post" class="text-center">
+                                    <input type="hidden" name="pedido_id" value="{{ pedido.id }}">
+                                    <button type="submit" class="btn btn-warning w-100">
+                                        <i class="fas fa-undo-alt"></i> Solicitar Reembolso
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No hay compras registradas aún.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
